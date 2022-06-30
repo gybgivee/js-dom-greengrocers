@@ -1,57 +1,68 @@
 const state = {
+  filter: "",
   items: [
     {
       id: "001-beetroot",
       name: "beetroot",
-      price: 0.35
+      price: 0.35,
+      type: "vegetable"
     },
     {
       id: "002-carrot",
       name: "carrot",
-      price: 0.35
+      price: 0.75,
+      type: "vegetable"
     },
     {
       id: "003-apple",
       name: "apple",
-      price: 0.35
+      price: 0.69,
+      type: "fruit"
     },
     {
       id: "004-apricot",
       name: "apricot",
-      price: 0.35
+      price: 0.24,
+      type: "fruit"
     },
     {
       id: "005-avocado",
       name: "avocado",
-      price: 0.35
+      price: 1.02,
+      type: "fruit"
     },
     {
       id: "006-bananas",
       name: "bananas",
-      price: 0.35
+      price: 0.17,
+      type: "fruit"
     },
     {
       id: "007-bell-pepper",
       name: "bell pepper",
-      price: 0.35
+      price: 0.80,
+      type: "vegetable"
     },
     {
       id: "008-berry",
       name: "berry",
-      price: 0.35
+      price: 1.82,
+      type: "fruit"
     },
     {
       id: "009-blueberry",
       name: "blueberry",
-      price: 0.35
+      price: 2.05,
+      type: "fruit"
     },
     {
       id: "010-eggplant",
       name: "eggplant",
-      price: 0.35
+      price: 0.34,
+      type: "vegetable"
     }
   ],
-  cart:[]
+  cart: []
 };
 
 const imgPath = "./assets/icons/";
@@ -64,28 +75,37 @@ const cartUl = document.querySelector(".cart--item-list");
 
 
 function setstate(updatedState) {
-  state['cart'] = updatedState;
+  Object.keys(updatedState).forEach((prop) => {
+    state[prop] = updatedState[prop];
+  });
   //console.log("state['cart'] ", state['cart']);
   rander();
 }
 
 function rander() {
-  randerAllItems();
+
+  randerCartItems();
+  randerFilterShopItems();
+
 
 }
-function randerAllItems() {
+
+function randerCartItems() {
+
   const total = document.querySelector(".total-number");
 
-  let calculateTotal =0;
+  let calculateTotal = 0;
   cartUl.innerHTML = "";
-  total.innerHTML =0;
+  total.innerHTML = 0;
   const items = state.cart;
+
+  console.log('items in cart', items);
   items.forEach(item => {
     if (item.quantity > 0) {
       createCartElement(item);
     }
     const findPrice = state.items.find(e => e.name === item.name)
-    calculateTotal+=(item.quantity *findPrice.price );
+    calculateTotal += (item.quantity * findPrice.price);
 
   });
   total.innerHTML = Number(calculateTotal.toFixed(2));
@@ -98,7 +118,6 @@ function createCartElement(item) {
   img.setAttribute("class", "cart--item-icon");
   const shopItem = state.items.find(itemInShop => itemInShop.name === item.name);
   img.src = imgPath + shopItem.id + imgType;
-  console.log('img path: ', imgPath + shopItem.id + imgType);
   addItemToCartLi.appendChild(img);
 
   const p = document.createElement("p");
@@ -113,11 +132,9 @@ function createCartElement(item) {
   removeButton.setAttribute("id", removeId);
   removeButton.innerHTML = "-";
   addItemToCartLi.appendChild(removeButton);
-  //listenToDecreaseCart
   listenToRemoveITem(removeButton);
 
 
-  //<span class="quantity-text center">1</span>
   const span = document.createElement("span");
   span.setAttribute("class", "quantity-text");
   span.classList.add("center");
@@ -136,38 +153,134 @@ function createCartElement(item) {
   listenToAddItem(addButton);
 }
 function init() {
-  showShopItems();
+  listenToFilterList();
+  listenToReorderItemList();
+}
+function createShopElement(item) {
+  const showShopItemsLi = document.createElement("li");
+  shopUl.appendChild(showShopItemsLi);
 
+  const imgWrap = document.createElement("div");
+  imgWrap.setAttribute("class", "store--item-icon");
+  showShopItemsLi.appendChild(imgWrap);
+
+  const img = document.createElement("img");
+  img.src = imgPath + item.id + imgType;
+  img.alt = item.name;
+  imgWrap.appendChild(img);
+
+  const p = document.createElement("p");
+  p.innerHTML = item.price + " £";
+  showShopItemsLi.appendChild(p);
+
+  const button = document.createElement("button");
+  //add secondlist class button.classList.add(item.name);
+  button.setAttribute("class", "addItem");
+  button.setAttribute("id", item.name);
+  button.innerHTML = "Add to cart";
+  showShopItemsLi.appendChild(button);//this will make every button has eventhandler
+  listenToAddItems(button);
+}
+function listenToFilterList() {
+
+  const fruits = document.querySelector("#fruit");
+  const vegs = document.querySelector("#vegetable");
+  const originalState = JSON.parse(JSON.stringify(state));
+  let updateState = JSON.parse(JSON.stringify(state));
+
+  const items = state.items;
+  let uncheck = 0;
+
+  fruits.addEventListener("input", function (event) {
+    if (event.target.checked) {
+      uncheck += 1;
+      const updateFilter = updateState.filter
+      updateState.filter = updateFilter + event.target.id;
+
+      if (uncheck === 2) {
+        setstate(originalState);
+      } else {
+        updateState.items = items.filter(function (item) {
+          return item.type === event.target.id;
+        });
+        setstate(updateState);
+      }
+
+
+    }
+  });
+
+  vegs.addEventListener("input", function (event) {
+    if (event.target.checked) {
+      uncheck += 1;
+      const updateFilter = updateState.filter
+      updateState.filter = updateFilter + event.target.id;
+
+      if (uncheck === 2) {
+        setstate(originalState);
+      } else {
+        updateState.items = items.filter(function (item) {
+          return item.type === event.target.id;
+        });
+        setstate(updateState);
+      }
+    }
+  });
+
+  if (uncheck === 0) {
+    setstate(originalState);
+  }
 
 }
+function listenToReorderItemList() {
 
-function showShopItems() {
+  const ascending = document.querySelector("#ascending");
+  const descending = document.querySelector("#descending");
+  const originalState = JSON.parse(JSON.stringify(state));
+  let updateState = JSON.parse(JSON.stringify(state));
+
   const items = state.items;
+  let uncheck = 0;
+  //.sort((a,b) => a-b)
+  ascending.addEventListener("input", function (event) {
+    if (event.target.checked) {
+      uncheck += 1;
+      const ascSItems = items.sort(function (a, b) {
+        return a.price - b.price;
+      });
+      updateState.items = ascSItems;
+      setstate(updateState);
+    }
+  });
+
+  descending.addEventListener("input", function (event) {
+    if (event.target.checked) {
+      uncheck += 1;
+      const ascSItems = items.sort(function (a, b) {
+        return a.price - b.price;
+      });
+      const dscItems = ascSItems.reverse();
+      updateState.items = dscItems;
+      setstate(updateState);
+    }
+  });
+
+  if (uncheck === 0) {
+    setstate(originalState);
+  }
+
+}
+function randerFilterShopItems() {
+  shopUl.innerHTML = "";
+  const items = state.items;
+
   items.forEach(item => {
 
-    const showShopItemsLi = document.createElement("li");
-    shopUl.appendChild(showShopItemsLi);
+    createShopElement(item);
 
-    const imgWrap = document.createElement("div");
-    imgWrap.setAttribute("class", "store--item-icon");
-    showShopItemsLi.appendChild(imgWrap);
-
-    const img = document.createElement("img");
-
-    img.src = imgPath + item.id + imgType;
-    img.alt = item.name;
-    imgWrap.appendChild(img);
-
-    const button = document.createElement("button");
-    //add secondlist class button.classList.add(item.name);
-    button.setAttribute("class", "addItem");
-    button.setAttribute("id", item.name);
-    button.innerHTML = "Add to cart";
-    showShopItemsLi.appendChild(button);//this will make every button has eventhandler
-    listenToAddItems(button);
-
-  })
+  });
 }
+
 function addItem(itemName) {
   let match = false;
   const maxQuantity = 999;
@@ -215,32 +328,28 @@ function listenToAddItems(addItemButton) {
     if (!result.match) {
       updateItems.push({ name: itemName, quantity: 1 })
     }
-    setstate(updateItems);
+    setstate({ cart: updateItems });
   })
 }
-
 function listenToAddItem(addButton) {
-  console.log('Add button here', addButton);
   addButton.addEventListener("click", function (event) {
     event.preventDefault();
     const addId = event.target.id;
     const itemName = addId.replace('add-', "");
-
     const result = addItem(itemName);
     let updateItems = result.updateItems;
-    setstate(updateItems);
+    setstate({ cart: updateItems });
 
   });
 }
 function listenToRemoveITem(removeButton) {
-  console.log('removeButton here', removeButton);
   removeButton.addEventListener("click", function (event) {
     event.preventDefault();
     const removeId = event.target.id;
     const itemName = removeId.replace('remove-', "");
     const result = removeItem(itemName);
     let updateItems = result.updateItems;
-    setstate(updateItems);
+    setstate({ cart: updateItems });
   });
 }
 
