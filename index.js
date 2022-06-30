@@ -1,5 +1,10 @@
 const state = {
   filter: "",
+  items: [],
+  cart: []
+};
+const data =
+{
   items: [
     {
       id: "001-beetroot",
@@ -61,10 +66,8 @@ const state = {
       price: 0.34,
       type: "vegetable"
     }
-  ],
-  cart: []
-};
-
+  ]
+}
 const imgPath = "./assets/icons/";
 const imgPath2 = "../assets/icons/";
 const imgType = ".svg";
@@ -78,7 +81,7 @@ function setstate(updatedState) {
   Object.keys(updatedState).forEach((prop) => {
     state[prop] = updatedState[prop];
   });
-  //console.log("state['cart'] ", state['cart']);
+ 
   rander();
 }
 
@@ -86,7 +89,7 @@ function rander() {
 
   randerCartItems();
   randerFilterShopItems();
-
+  
 
 }
 
@@ -99,7 +102,6 @@ function randerCartItems() {
   total.innerHTML = 0;
   const items = state.cart;
 
-  console.log('items in cart', items);
   items.forEach(item => {
     if (item.quantity > 0) {
       createCartElement(item);
@@ -153,10 +155,13 @@ function createCartElement(item) {
   listenToAddItem(addButton);
 }
 function init() {
+
   listenToFilterList();
+  // const result = await firstFunction()
   listenToReorderItemList();
 }
 function createShopElement(item) {
+  //append allow you to add multiple elements append(...objects)
   const showShopItemsLi = document.createElement("li");
   shopUl.appendChild(showShopItemsLi);
 
@@ -182,94 +187,100 @@ function createShopElement(item) {
   listenToAddItems(button);
 }
 function listenToFilterList() {
-
+//do not unnessary create hard copy of object 
+/* the 1.problem : the object was created at the time function was called so eventhough the state updated but the function get call before
+  so it still take the old state. 
+*/
   const fruits = document.querySelector("#fruit");
   const vegs = document.querySelector("#vegetable");
-  const originalState = JSON.parse(JSON.stringify(state));
-  let updateState = JSON.parse(JSON.stringify(state));
-
-  const items = state.items;
-  let uncheck = 0;
+  const originalItems = JSON.parse(JSON.stringify(data.items));
+  const selectBoth =["vegetablefruit","fruitvegetable"];
 
   fruits.addEventListener("input", function (event) {
     if (event.target.checked) {
-      uncheck += 1;
-      const updateFilter = updateState.filter
-      updateState.filter = updateFilter + event.target.id;
+    
+      const updateFilter = state.filter
+      state.filter = updateFilter + event.target.id;
 
-      if (uncheck === 2) {
-        setstate(originalState);
+      if (state.filter === selectBoth[0]||state.filter === selectBoth[1]) {
+        console.log('current state:', state.filter);
+        state.filter = "";
+        state.items = originalItems;
+        setstate(state);
       } else {
-        updateState.items = items.filter(function (item) {
+        state.items = state.items.filter(function (item) {
           return item.type === event.target.id;
         });
-        setstate(updateState);
+        setstate(state);
       }
-
 
     }
   });
 
   vegs.addEventListener("input", function (event) {
     if (event.target.checked) {
-      uncheck += 1;
-      const updateFilter = updateState.filter
-      updateState.filter = updateFilter + event.target.id;
+    
+      const updateFilter = state.filter
+      state.filter = updateFilter + event.target.id;
 
-      if (uncheck === 2) {
-        setstate(originalState);
+      if (state.filter === selectBoth[0]||state.filter === selectBoth[1]) {
+        console.log('current state:', state.filter);
+        state.filter = "";
+        state.items = originalItems;
+        setstate(state);
       } else {
-        updateState.items = items.filter(function (item) {
+        state.items = state.items.filter(function (item) {
           return item.type === event.target.id;
         });
-        setstate(updateState);
+        setstate(state);
       }
     }
   });
 
-  if (uncheck === 0) {
-    setstate(originalState);
+  if (state.filter==="") {
+ 
+    //setstate(originalState);
+    state.items = originalItems;
+    setstate(state);
   }
 
 }
+
 function listenToReorderItemList() {
 
   const ascending = document.querySelector("#ascending");
   const descending = document.querySelector("#descending");
-  const originalState = JSON.parse(JSON.stringify(state));
-  let updateState = JSON.parse(JSON.stringify(state));
+  let updateState = state;//JSON.parse(JSON.stringify(state));
 
-  const items = state.items;
-  let uncheck = 0;
   //.sort((a,b) => a-b)
+
   ascending.addEventListener("input", function (event) {
+    updateState.name = "ascending"; ;
     if (event.target.checked) {
-      uncheck += 1;
-      const ascSItems = items.sort(function (a, b) {
+
+      const ascItems = state.items.sort(function (a, b) {
         return a.price - b.price;
       });
-      updateState.items = ascSItems;
+      updateState.items = ascItems;
       setstate(updateState);
     }
   });
 
   descending.addEventListener("input", function (event) {
+    updateState.name = "descending"; ;
     if (event.target.checked) {
-      uncheck += 1;
-      const ascSItems = items.sort(function (a, b) {
+
+      const ascItems = state.items.sort(function (a, b) {
         return a.price - b.price;
       });
-      const dscItems = ascSItems.reverse();
+      const dscItems = ascItems.reverse();
       updateState.items = dscItems;
       setstate(updateState);
     }
   });
 
-  if (uncheck === 0) {
-    setstate(originalState);
-  }
-
 }
+
 function randerFilterShopItems() {
   shopUl.innerHTML = "";
   const items = state.items;
@@ -280,10 +291,10 @@ function randerFilterShopItems() {
 
   });
 }
-
 function addItem(itemName) {
   let match = false;
   const maxQuantity = 999;
+  //thiis will return the array of cart if the same item it should update quality rather than added a list
   let updateItems = state.cart.map(function (item) {
 
     if (item.name === itemName) {
@@ -318,6 +329,7 @@ function removeItem(itemName) {
   });
   return { updateItems: updateItems, match: match }
 }
+//for button in the shopUl list 
 function listenToAddItems(addItemButton) {
   addItemButton.addEventListener("click", function (event) {
     event.preventDefault();
@@ -328,6 +340,7 @@ function listenToAddItems(addItemButton) {
     if (!result.match) {
       updateItems.push({ name: itemName, quantity: 1 })
     }
+    
     setstate({ cart: updateItems });
   })
 }
@@ -338,6 +351,7 @@ function listenToAddItem(addButton) {
     const itemName = addId.replace('add-', "");
     const result = addItem(itemName);
     let updateItems = result.updateItems;
+   
     setstate({ cart: updateItems });
 
   });
@@ -349,6 +363,7 @@ function listenToRemoveITem(removeButton) {
     const itemName = removeId.replace('remove-', "");
     const result = removeItem(itemName);
     let updateItems = result.updateItems;
+   
     setstate({ cart: updateItems });
   });
 }
